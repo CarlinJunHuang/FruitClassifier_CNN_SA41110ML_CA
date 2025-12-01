@@ -45,7 +45,7 @@ def load_images(filepaths):
   # Instantiate class to transform image to tensor
   # Resize to 64x64 and ensure RGB
   to_tensor = transforms.Compose([
-        transforms.Resize((64, 64)),
+        transforms.Resize((28, 28)),
         transforms.ToTensor()
     ])
 
@@ -153,7 +153,7 @@ def test(model, filepaths, labels):
 
 def train(model, criterion, optimizer, filepaths, labels):
   # our hyper-parameters for training
-  n_epochs = 10 
+  n_epochs = 8 
   batch_size = 32 
 
   for epoch in range(n_epochs):
