@@ -66,7 +66,7 @@ class SimpleCNN(nn.Module):
     self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
     self.fc1 = nn.Linear(in_features= 16 * 16 * 32, out_features=128)
     self.fc2 = nn.Linear(in_features=128, out_features=4)
-    self.relu = nn.Sigmoid()
+    self.relu = nn.ReLU()
 
   def forward(self, x):
     x = self.conv1(x)
@@ -179,7 +179,7 @@ def train(model, criterion, optimizer, filepaths, labels, transform):
 # Instantiate the model, define the loss function and optimizer
 model = SimpleCNN()
 criterion = nn.CrossEntropyLoss() 
-optimizer = optim.Adam(model.parameters(), lr=0.0025)
+optimizer = optim.Adam(model.parameters(), lr=0.001)
 
 os.makedirs("outputs", exist_ok=True)
 
