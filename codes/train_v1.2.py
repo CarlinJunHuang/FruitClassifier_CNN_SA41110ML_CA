@@ -172,7 +172,7 @@ def train(model, criterion, optimizer, filepaths, labels):
       
       correct_preds += torch.sum(preds == batch_labels)
 
-    avg_loss = run_loss / (total_samples / batch_size) 
+    avg_loss = run_loss / total_samples
     accuracy = correct_preds / float(samples_trained) 
 
     print(f"Epoch {epoch+1} " +
