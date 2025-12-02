@@ -3,6 +3,5 @@ only change filepaths and channel.
 
 v1.2
 change the input size ot 64 by 64.
-increase the batch size to 64.
 increase the epochs to 10.
 add a mis-prediction output result.
