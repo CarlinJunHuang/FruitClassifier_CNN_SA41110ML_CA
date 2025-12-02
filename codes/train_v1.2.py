@@ -90,7 +90,7 @@ class SimpleCNN(nn.Module):
 
 
 def test(model, filepaths, labels):
-  batch_size = 64
+  batch_size = 32
   samples_tested = 0
   correct_preds = 0
   total_samples = len(filepaths)
@@ -140,7 +140,7 @@ def test(model, filepaths, labels):
 
 def train(model, criterion, optimizer, filepaths, labels):
   n_epochs = 10 
-  batch_size = 64 
+  batch_size = 32 
 
   for epoch in range(n_epochs):
     samples_trained = 0
@@ -172,7 +172,7 @@ def train(model, criterion, optimizer, filepaths, labels):
       
       correct_preds += torch.sum(preds == batch_labels)
 
-    avg_loss = run_loss / total_samples
+    avg_loss = run_loss / (total_samples / batch_size) 
     accuracy = correct_preds / float(samples_trained) 
 
     print(f"Epoch {epoch+1} " +

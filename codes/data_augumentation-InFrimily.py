@@ -11,7 +11,7 @@ from torchvision.transforms.v2 import GaussianNoise, functional
 DATA_DIR = "/Users/tohyue-sheng/git/FruitClassifier_CNN_SA41110ML_CA/data_original/train"  # folder containing all images
 OUTPUT_DIR = "./augmented_images"
 CLASSES = ["apple", "banana", "orange", "mixed"]
-NUM_IMAGES_PER_CLASS = 10
+NUM_IMAGES_PER_CLASS = 80
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
@@ -66,7 +66,8 @@ for cls in CLASSES:
         pil_img = Image.open(img_path).convert("RGB")
         aug_img = apply_transforms(pil_img)
 
-        output_path = os.path.join(cls_output_dir, f"aug_{img_name}")
+        name, ext = os.path.splitext(img_name)
+        output_path = os.path.join(cls_output_dir, f"{name}_aug{ext}") 
         aug_img.save(output_path)
 
         print(f"Saved augmented image: {output_path}")

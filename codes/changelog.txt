@@ -5,3 +5,13 @@ v1.2
 change the input size to 64 by 64.
 increase the epochs to 10.
 add a mis-prediction output result.
+
+v1.3
+Global hyperparameters (Epochs, Batch Size, Image Size) extracted for easy modification.
+Changed training data source to 'data_final'.
+Structured output: Unique timestamped folders for each run in 'outputs/'.
+Added visualization: Loss/Accuracy curves and Confusion Matrix saved as images.
+Cleaned up legacy comments.
+Added CUDA support (auto-detect GPU).
+Added intra-epoch progress printing.
+Improved plot labeling with folder name and test accuracy.
