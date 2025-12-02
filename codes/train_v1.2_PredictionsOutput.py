@@ -90,7 +90,7 @@ class SimpleCNN(nn.Module):
 
 
 def test(model, filepaths, labels):
-  batch_size = 32
+  batch_size = 64
   samples_tested = 0
   correct_preds = 0
   total_samples = len(filepaths)
@@ -140,7 +140,7 @@ def test(model, filepaths, labels):
 
 def train(model, criterion, optimizer, filepaths, labels):
   n_epochs = 10 
-  batch_size = 32 
+  batch_size = 64 
 
   for epoch in range(n_epochs):
     samples_trained = 0
