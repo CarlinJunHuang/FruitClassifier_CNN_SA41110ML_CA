@@ -18,7 +18,7 @@ TEAM_MEMBER_NAME = "Jun"       # Name of the team member running the experiment
 TRIAL_PARAM_NAME = "Baseline"  # Parameter being tested (e.g., "lr_0.01", "epoch_20")
 NUM_EPOCHS = 10
 BATCH_SIZE = 32
-IMAGE_SIZE = 32
+IMAGE_SIZE = 64
 LEARNING_RATE = 0.001
 
 # Class mapping
@@ -38,9 +38,14 @@ def get_label_from_filename(filename):
         return -1
 
 
-def prepare_data(target_dir):
+def load_images_from_folder(target_dir):
+    """
+    Loads all images from the folder into a single Tensor.
+    Returns: (images_tensor, labels_tensor, filenames_list)
+    """
     filepaths = []
     labels = []
+    filenames = []
 
     if os.path.exists(target_dir):
         files = os.listdir(target_dir)
@@ -52,33 +57,44 @@ def prepare_data(target_dir):
             if label != -1:
                 filepaths.append(os.path.join(target_dir, file))
                 labels.append(label)
+                filenames.append(file)
     else:
         print(f"Warning: Directory {target_dir} not found.")
+        return None, None, None
 
-    return np.array(filepaths), torch.tensor(labels)
+    if not filepaths:
+        return None, None, None
 
-
-def load_images(filepaths):
+    # Transform
     to_tensor = transforms.Compose([
         transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)),
         transforms.ToTensor()
     ])
 
-    tensor = None
+    images_list = []
+    valid_labels = []
+    valid_filenames = []
 
-    for item in filepaths:
+    print(f"Pre-loading {len(filepaths)} images from {target_dir}...")
+    
+    for i, item in enumerate(filepaths):
         try:
             image = Image.open(item).convert("RGB")
             img_tensor = to_tensor(image)
-
-            if tensor is None:
-                tensor = img_tensor.unsqueeze(0)
-            else:
-                tensor = torch.cat((tensor, img_tensor.unsqueeze(0)), dim=0)
+            images_list.append(img_tensor)
+            valid_labels.append(labels[i])
+            valid_filenames.append(filenames[i])
         except Exception as e:
             print(f"Error loading image {item}: {e}")
+
+    if not images_list:
+        return None, None, None
+
+    # Stack into a single tensor (N, 3, 32, 32)
+    images_tensor = torch.stack(images_list)
+    labels_tensor = torch.tensor(valid_labels)
     
-    return tensor
+    return images_tensor, labels_tensor, valid_filenames
 
 
 class SimpleCNN(nn.Module):
@@ -118,27 +134,24 @@ class SimpleCNN(nn.Module):
         return x
 
 
-def train(model, criterion, optimizer, filepaths, labels, device):
+def train(model, criterion, optimizer, images, labels):
     history = {'loss': [], 'accuracy': []}
+    total_samples = len(images)
     
     for epoch in range(NUM_EPOCHS):
         samples_trained = 0
         run_loss = 0
         correct_preds = 0
-        total_samples = len(filepaths) 
-
+        
         permutation = torch.randperm(total_samples)
+        
         for i in range(0, total_samples, BATCH_SIZE):
             indices = permutation[i : i+BATCH_SIZE]
-            batch_inputs = load_images(filepaths[indices])
-            if batch_inputs is None: continue
             
-            # Move data to device
-            batch_inputs = batch_inputs.to(device)
-            batch_labels = labels[indices].to(device)
+            # Data is already on device
+            batch_inputs = images[indices]
+            batch_labels = labels[indices]
             
-            if len(batch_inputs) == 0: continue
-
             outputs = model(batch_inputs)
 
             loss = criterion(outputs, batch_labels)
@@ -154,10 +167,6 @@ def train(model, criterion, optimizer, filepaths, labels, device):
             samples_trained += len(batch_labels)
             correct_preds += torch.sum(preds == batch_labels)
             
-            # Progress update
-            if (i // BATCH_SIZE) % 10 == 0:
-                print(f"  Epoch {epoch+1}: Batch {i // BATCH_SIZE} processed ({samples_trained}/{total_samples})")
-
         avg_loss = run_loss / (total_samples / BATCH_SIZE) 
         accuracy = correct_preds / float(samples_trained) 
         
@@ -171,25 +180,21 @@ def train(model, criterion, optimizer, filepaths, labels, device):
     return history
 
 
-def test(model, filepaths, labels, device):
+def test(model, images, labels, filenames):
     samples_tested = 0
     correct_preds = 0
-    total_samples = len(filepaths)
+    total_samples = len(images)
     
     all_preds = []
     all_labels = []
     incorrect_predictions = []
 
+    # No need to shuffle for testing
     for i in range(0, total_samples, BATCH_SIZE):
-        batch_filepaths = filepaths[i : i + BATCH_SIZE]
-        batch_inputs = load_images(batch_filepaths)
-        if batch_inputs is None: continue
-        
-        # Move data to device
-        batch_inputs = batch_inputs.to(device)
-        batch_labels = labels[i : i + BATCH_SIZE].to(device)
-        
-        if len(batch_inputs) == 0: continue
+        # Data is already on device
+        batch_inputs = images[i : i + BATCH_SIZE]
+        batch_labels = labels[i : i + BATCH_SIZE]
+        batch_filenames = filenames[i : i + BATCH_SIZE]
 
         outputs = model(batch_inputs)
 
@@ -209,7 +214,7 @@ def test(model, filepaths, labels, device):
         for idx in wrong_indices:
             local_idx = idx.item()
             incorrect_predictions.append({
-                "filename": os.path.basename(batch_filepaths[local_idx]),
+                "filename": batch_filenames[local_idx],
                 "true": ID_TO_CLASS[batch_labels[local_idx].item()],
                 "pred": ID_TO_CLASS[preds[local_idx].item()]
             })
@@ -219,11 +224,8 @@ def test(model, filepaths, labels, device):
     
     if incorrect_predictions:
         print(f"\nIncorrect Predictions ({len(incorrect_predictions)}):")
-        # Show first 10 to avoid clutter
-        for item in incorrect_predictions[:10]:
+        for item in incorrect_predictions:
             print(f"  {item['filename']}: True={item['true']}, Pred={item['pred']}")
-        if len(incorrect_predictions) > 10:
-            print(f"  ... and {len(incorrect_predictions) - 10} more.")
     else:
         print("\nNo incorrect predictions!")
         
@@ -281,7 +283,6 @@ def main():
     print(f"Using device: {device}")
 
     # 2. Setup Directories
-    # Create unique output directory based on time and global params
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     output_dir_name = f"{TEAM_MEMBER_NAME}_{TRIAL_PARAM_NAME}_{timestamp}"
     output_dir = os.path.join("outputs", output_dir_name)
@@ -292,10 +293,9 @@ def main():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     parent_dir = os.path.dirname(script_dir)
     
-    # Look for data_final
     dir_train = os.path.join(parent_dir, "data_final")
     if not os.path.exists(dir_train):
-        dir_train = "data_final" # Fallback to current dir
+        dir_train = "data_final"
         
     dir_test = os.path.join(parent_dir, "test")
     if not os.path.exists(dir_test):
@@ -304,23 +304,36 @@ def main():
     print(f"Training data path: {dir_train}")
     print(f"Test data path: {dir_test}")
 
-    # 3. Prepare Data
-    filepaths_train, labels_train = prepare_data(dir_train)
-    filepaths_test, labels_test = prepare_data(dir_test)
-
-    if len(filepaths_train) == 0:
+    # 3. Prepare Data (Load ALL into RAM/GPU)
+    print("Loading training data...")
+    images_train, labels_train, _ = load_images_from_folder(dir_train)
+    
+    if images_train is None:
         print("Error: No training images found!")
         return
 
+    # Move to device immediately
+    images_train = images_train.to(device)
+    labels_train = labels_train.to(device)
+    print(f"Training data loaded: {images_train.shape} on {device}")
+
+    # Load test data
+    print("Loading test data...")
+    images_test, labels_test, filenames_test = load_images_from_folder(dir_test)
+    if images_test is not None:
+        images_test = images_test.to(device)
+        labels_test = labels_test.to(device)
+        print(f"Test data loaded: {images_test.shape} on {device}")
+
     # 4. Initialize Model
     model = SimpleCNN()
-    model.to(device) # Move model to device
+    model.to(device)
     criterion = nn.CrossEntropyLoss() 
     optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
     # 5. Train
     print(f"Starting training for {NUM_EPOCHS} epochs...")
-    history = train(model, criterion, optimizer, filepaths_train, labels_train, device)
+    history = train(model, criterion, optimizer, images_train, labels_train)
     
     # Save Model
     model_path = os.path.join(output_dir, "model.pth")
@@ -329,14 +342,14 @@ def main():
     
     # 6. Test and Visualize
     test_acc = None
-    if len(filepaths_test) > 0:
-        print(f"Found {len(filepaths_test)} test images. Testing...")
-        y_true, y_pred, test_acc = test(model, filepaths_test, labels_test, device)
+    if images_test is not None:
+        print(f"Testing...")
+        y_true, y_pred, test_acc = test(model, images_test, labels_test, filenames_test)
         plot_confusion_matrix(y_true, y_pred, output_dir, output_dir_name)
     else:
         print("No test images found, skipping confusion matrix.")
 
-    # 7. Plot Metrics (with Test Acc if available)
+    # 7. Plot Metrics
     plot_metrics(history, output_dir, output_dir_name, test_acc)
 
 if __name__ == "__main__":
