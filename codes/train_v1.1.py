@@ -91,7 +91,7 @@ class SimpleCNN(nn.Module):
     # Fully Connected Layer 1: 
     # Input size calculation: 64x64 -> pool -> 32x32 -> pool -> 16x16.
     # Feature map size: 16 * 16 * 32.
-    self.fc1 = nn.Linear(in_features= 16 * 16 * 32, out_features=128)
+    self.fc1 = nn.Linear(in_features= 7 * 7 * 32, out_features=128)
     
     # Fully Connected Layer 2: input size = 128, output size = 4 (for 4 output classes).
     self.fc2 = nn.Linear(in_features=128, out_features=4)
@@ -112,7 +112,7 @@ class SimpleCNN(nn.Module):
     x = self.pool(x)
 
     # Flatten the feature maps 
-    x = x.view(-1, 16 * 16 * 32)
+    x = x.view(-1, 7 * 7 * 32)
 
     # Fully connected layers
     x = self.fc1(x)
@@ -125,7 +125,7 @@ class SimpleCNN(nn.Module):
 
 
 def test(model, filepaths, labels):
-  batch_size = 32
+  batch_size = 64
   samples_tested = 0
   correct_preds = 0
   total_samples = len(filepaths)
@@ -153,8 +153,8 @@ def test(model, filepaths, labels):
 
 def train(model, criterion, optimizer, filepaths, labels):
   # our hyper-parameters for training
-  n_epochs = 8 
-  batch_size = 32 
+  n_epochs = 2 
+  batch_size = 64 
 
   for epoch in range(n_epochs):
     # For tracking and printing our training-progress
