@@ -10,16 +10,18 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import confusion_matrix
 import datetime
+import time
 
 # ==========================================
 # Global Hyperparameters & Settings
 # ==========================================
-TEAM_MEMBER_NAME = "Jun"       # Name of the team member running the experiment
-TRIAL_PARAM_NAME = "Baseline"  # Parameter being tested (e.g., "lr_0.01", "epoch_20")
+TEAM_MEMBER_NAME = "YS"       # Name of the team member running the experiment
+TRIAL_PARAM_NAME = "64x64"  # Parameter being tested (e.g., "lr_0.01", "epoch_20")
 NUM_EPOCHS = 10
 BATCH_SIZE = 32
 IMAGE_SIZE = 64
 LEARNING_RATE = 0.001
+TRAINING_TIMER = True
 
 # Class mapping
 ID_TO_CLASS = {0: "apple", 1: "banana", 2: "orange", 3: "mixed"}
@@ -332,9 +334,21 @@ def main():
     optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
     # 5. Train
-    print(f"Starting training for {NUM_EPOCHS} epochs...")
+    print(f"\nStarting training for {NUM_EPOCHS} epochs...")
+    if TRAINING_TIMER:
+        train_start_time = time.time()
+
     history = train(model, criterion, optimizer, images_train, labels_train)
     
+    if TRAINING_TIMER:
+        train_end_time = time.time()
+        train_duration = train_end_time - train_start_time
+
+        minutes = int(train_duration // 60)
+        seconds = int(train_duration % 60)
+
+        print(f"\nTraining completed in {minutes} minutes {seconds} seconds ({train_duration:.2f} seconds)\n")
+
     # Save Model
     model_path = os.path.join(output_dir, "model.pth")
     torch.save(model.state_dict(), model_path)

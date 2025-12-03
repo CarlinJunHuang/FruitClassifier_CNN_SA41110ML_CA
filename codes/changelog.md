@@ -24,3 +24,10 @@ Improved plot labeling with folder name and test accuracy.
 
 **OPTIMIZATION**
 Pre-load all images to RAM/GPU at start to eliminate disk I/O bottleneck.
+
+## v1.4
+
+Update Testing Timer to print training time.
+
+- Edit Global hyper parameter TRAINING_TIMER to True/False to enable/disable it. (Enabled by default)
+  Minor update to print statement formatting for more clarity.
