@@ -31,3 +31,17 @@ Update Testing Timer to print training time.
 
 - Edit Global hyper parameter TRAINING_TIMER to True/False to enable/disable it. (Enabled by default)
   Minor update to print statement formatting for more clarity.
+
+## v1.5
+
+**Key Feature: "Helper of Tuning"**
+
+- **Global Configuration**: All key parameters (Epochs, Batch, LR, Image Size, Filters, Neurons, Pooling, Dropout) are now global variables at the top of the file for instant tuning.
+- **Validation Split**: Added a `VALIDATION_SPLIT` parameter (default 0.2) to automatically create a validation set and track overfitting.
+- **Dynamic Architecture**: The model now automatically adjusts to changes in Image Size or filter counts without manual code changes (borrowed logic from Maha's pooling script).
+- **Enhanced Visualization**:
+  - Added a parameter summary box to the training plots so you know exactly which settings produced the result.
+  - Added "Validation" curves (Red/Magenta) alongside Training curves.
+- **New Features**:
+  - Added `POOLING_TYPE` ("Max" or "Avg").
+  - Added `DROPOUT_RATE` for regularization.
