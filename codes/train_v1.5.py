@@ -55,7 +55,7 @@ RANDOM_SEED = 42
 # --- Dataset Config ---
 IMAGE_SIZE = 64
 VALIDATION_SPLIT = 0.2  # Fraction of training data to use for validation
-DATA_SOURCE_DIR = "data_final" # Options: "data_final", "data_final_HJ"
+DATA_SOURCE_DIR = "data_final"
 
 # --- Network Architecture Config ---
 # Convolutional Layers: [out_channels, out_channels, ...]
