@@ -27,7 +27,7 @@ PyTorch should match your CUDA/cuDNN stack if you plan to use GPU acceleration.
 - Default input resolution is `64x64`; adjust `IMAGE_SIZE` if you change the dataset.
 
 ## Running Training
-1) Open `codes/train_v1.5.py` (or `codes/train_v1.5 copy.py`) and set:
+1) Open `codes/train_v1.5.py` and set:
    - `TEAM_MEMBER_NAME`, `TRIAL_DESCRIPTION`
    - `NUM_EPOCHS`, `BATCH_SIZE`, `LEARNING_RATE`, `WEIGHT_DECAY`
    - `CONV_ARCH`, `FC_ARCH`, `POOLING_TYPE`, `DROPOUT_RATE`
